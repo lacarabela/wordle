@@ -1,10 +1,14 @@
 import random
 
-# List of words to choose from
-word_list = ["hairs", "quilt", "sugar", "crown", "sweat", "piano"]
+def load_words(filename):
+    with open(filename, 'r') as file:
+        words = file.read().splitlines()
+    return words
+
+words = load_words('wordle-words.txt')
 
 # Choose a random word from the list
-answer = random.choice(word_list)
+answer = random.choice(words)
 
 # Checks if the guess is correct
 def check_guess(guess, answer):
