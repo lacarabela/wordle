@@ -10,12 +10,15 @@ answer = random.choice(word_list)
 def check_guess(guess, answer):
     result = []
     for i in range(len(guess)):
-        if guess[i] == answer[i]:
-            result.append(guess[i])
+        if guess[i] == answer[i]: 
+            # If the letter is in the correct position and is correct the letter will turn green
+            result.append('🟩') 
         elif guess[i] in answer:
-            result.append("+")
+            # If the letter is in the word but not in the correct position the letter will turn yellow
+            result.append('🟨')
         else:
-            result.append("-")
+            # If the letter is not in the word the letter will turn red
+            result.append('⬛')
     return result
 
 def main():
