@@ -1,5 +1,10 @@
 import random
 
+# TODO: Make it so when a letter is used and it isn't in the word it will be removed from the list of possible letters
+# TODO: Make it so you can only guess words that are in the list of words
+# TODO: Make a battle mode to go against either an AI or another player
+# TODO: Make a main menu to choose between the two modes
+
 def load_words(filename):
     with open(filename, 'r') as file:
         words = file.read().splitlines()
