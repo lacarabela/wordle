@@ -50,30 +50,49 @@ def single_player():
         print("You've run out of attempts. The word was:", answer)
 
 # AI implementation
-
+# Initializes the letter possibilities (whether its in the word or not, and whether position is correct) to the AI logic to determine the word
 def initialize_ai_constraints(word_length):
+    # ⬛
     not_in_word = []
+    # 🟨
     in_word_wrong_position = []
     for _ in range(word_length):
         in_word_wrong_position.append([])
+    # 🟩
     in_word_correct_position = [None] * word_length
     return not_in_word, in_word_wrong_position, in_word_correct_position
 
-def update_ai_constraints(guess, feedback, not_in_word, in_word_wrong_position, in_word_correct_position):
-    word_length = len(guess)
-    for i in range(word_length):
+def update_ai_constraints(guess, feedback, not_in_word, in_word_wrong_position, in_word_correct_position, answer):
+    letter_count = {}
+    # First pass to count the letters in the answer
+    for letter in answer:
+        letter_count[letter] = letter_count.get(letter, 0) + 1
+    
+    # Second pass to update constraints based on feedback
+    for i in range(len(guess)):
+        char_count = letter_count.get(guess[i], 0)  # Safely get the count of the letter, defaulting to 0 if not found
+
         if feedback[i] == '⬛':
-            not_in_word.append(guess[i])
+            if guess[i] not in not_in_word:
+                not_in_word.append(guess[i])
         elif feedback[i] == '🟨':
-            in_word_wrong_position[i].append(guess[i])
+            if char_count > 0:  # There are still occurrences of this letter that can be placed elsewhere
+                if guess[i] not in in_word_wrong_position[i]:
+                    in_word_wrong_position[i].append(guess[i])
+                letter_count[guess[i]] -= 1  # Reduce the count as this placement is attempted
         elif feedback[i] == '🟩':
             in_word_correct_position[i] = guess[i]
+            letter_count[guess[i]] -= 1  # Confirm this placement and reduce the count
+
+        # Additional check to ensure letters not yet confirmed are not wrongfully excluded
+        if char_count <= 0 and guess[i] not in in_word_correct_position and guess[i] not in not_in_word:
+            not_in_word.append(guess[i])
 
 def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_position):
     possible_words = []
     for word in words:
         validity = True
-
+        # Check if the word is valid based on the constraints originally initialized
         for i in range(len(word)):
             if word[i] in not_in_word:
                 validity = False
@@ -84,7 +103,8 @@ def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_positio
             if in_word_correct_position[i] is not None and word[i] != in_word_correct_position[i]:
                 validity = False
                 break
-        
+    
+        # If the word passes set constraints then add it to the list of possible words
         if validity:
             possible_words.append(word)
         
@@ -123,7 +143,7 @@ def battle_mode():
                 ai_letter_result, ai_color_result = check_guess(ai_guess_word, ai_answer)
                 print("AI's guess:", ai_guess_word)
                 print("AI's Feedback:", ' '.join(ai_color_result))
-                update_ai_constraints(ai_guess_word, ai_color_result, not_in_word, in_word_wrong_position, in_word_correct_position)
+                update_ai_constraints(ai_guess_word, ai_color_result, not_in_word, in_word_wrong_position, in_word_correct_position, ai_answer)
                 if ai_guess == ai_answer:
                     print("AI has guessed the word correctly!")
                     break
