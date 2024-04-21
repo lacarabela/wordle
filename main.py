@@ -122,7 +122,7 @@ def battle_mode():
             if ai_guess_word:
                 ai_letter_result, ai_color_result = check_guess(ai_guess_word, ai_answer)
                 print("AI's guess:", ai_guess_word)
-                print("AI's Feedback:", ' '.join(ai_color_result[1]))
+                print("AI's Feedback:", ' '.join(ai_color_result))
                 update_ai_constraints(ai_guess_word, ai_color_result, not_in_word, in_word_wrong_position, in_word_correct_position)
                 if ai_guess == ai_answer:
                     print("AI has guessed the word correctly!")
