@@ -1,7 +1,6 @@
 import random
 
 # TODO: Make it so when a letter is used and it isn't in the word it will be removed from the list of possible letters
-# TODO: Make it so you can only guess words that are in the list of words
 # TODO: Make a battle mode to go against either an AI or another player
 # TODO: Make a main menu to choose between the two modes
 
@@ -36,10 +35,14 @@ def main():
     attempts = 6
     while attempts > 0:
         guess = input("Enter a 5-letter word: ").strip().lower()
-        if len(guess) != 5:
-            print("Please enter a 5-letter word.")
+        
+        # Makes sure the guess is 5 letters and is in the list of words
+        if len(guess) != 5 or guess not in words:
+            print("Invalid guess or not in dictionary. Try again.")
             continue
+
         print(check_guess(guess, answer))
+
         if guess == answer:
             print("Congratulations! You've guessed the word.")
             break
