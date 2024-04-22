@@ -1,5 +1,6 @@
 # Wordle (Single Player & Battle Mode)
 ## Description
+This Wordle AI game is a text-based version of the popular word puzzle game, featuring two distinct gameplay modes: Single Player Mode and Battle Mode. In Single Player Mode, players try to guess a hidden five-letter word based on feedback, mimicking the classic gameplay popularized by the New York Times. In Battle Mode, players compete against an AI opponent that improves its guesses based on feedback from its initial guess and subsequent scoring of potential words. The game utilizes a text file containing a bank of five-letter words as its source for word selection, ensuring a diverse and challenging experience with each session.
 
 ## Features
 - **Single Player Mode:** Play against the AI in a challenge to uncover the hidden word first.
