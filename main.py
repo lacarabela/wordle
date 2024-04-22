@@ -12,21 +12,32 @@ answer = random.choice(words)
 
 # Checks if the guess is correct
 def check_guess(guess, answer):
-    letter_result = []
-    color_result = []
-    for i in range(len(guess)):
-        if guess[i] == answer[i]: 
-            letter_result.append(guess[i].upper())
-            # If the letter is in the correct position and is correct the letter will turn green
-            color_result.append('🟩') 
-        elif guess[i] in answer:
-            letter_result.append(guess[i].upper())
-            # If the letter is in the word but not in the correct position the letter will turn yellow
-            color_result.append('🟨')
+    guess = guess.lower()
+    answer = answer.lower()
+    letter_result = list(guess.upper())  # return the uppercase version of the guess
+    color_result = ['⬛'] * len(guess)
+    answer_counts = {}
+
+    # Count occurrences of each letter in the answer
+    for letter in answer:
+        if letter in answer_counts:
+            answer_counts[letter] += 1
         else:
-            letter_result.append(guess[i].upper())
-            # If the letter is not in the word the letter will turn grey
-            color_result.append('⬛')
+            answer_counts[letter] = 1
+
+    # First pass to mark greens
+    for i in range(len(guess)):
+        if guess[i] == answer[i]:
+            color_result[i] = '🟩'
+            answer_counts[guess[i]] -= 1
+
+    # Second pass to mark yellows
+    for i in range(len(guess)):
+        if guess[i] != answer[i] and guess[i] in answer_counts and answer_counts[guess[i]] > 0:
+            if color_result[i] == '⬛':
+                color_result[i] = '🟨'
+                answer_counts[guess[i]] -= 1
+
     return letter_result, color_result
 
 def single_player():
@@ -62,53 +73,77 @@ def initialize_ai_constraints(word_length):
     in_word_correct_position = [None] * word_length
     return not_in_word, in_word_wrong_position, in_word_correct_position
 
-def update_ai_constraints(guess, feedback, not_in_word, in_word_wrong_position, in_word_correct_position, answer):
-    letter_count = {}
-    # First pass to count the letters in the answer
+def update_ai_constraints(guess, color_result, not_in_word, in_word_wrong_position, in_word_correct_position, answer):
+    guess = guess.lower()
+    answer = answer.lower()
+    letter_count = {}  # assuming this dictionary tracks the counts of letters
+
+    # Initialize letter_count dictionary with all letters from the answer
     for letter in answer:
-        letter_count[letter] = letter_count.get(letter, 0) + 1
-    
-    # Second pass to update constraints based on feedback
+        if letter not in letter_count:
+            letter_count[letter] = 0
+        letter_count[letter] += 1
+
+    # Update constraints based on the guess and color_result
     for i in range(len(guess)):
-        char_count = letter_count.get(guess[i], 0)  # Safely get the count of the letter, defaulting to 0 if not found
-
-        if feedback[i] == '⬛':
-            if guess[i] not in not_in_word:
-                not_in_word.append(guess[i])
-        elif feedback[i] == '🟨':
-            if char_count > 0:  # There are still occurrences of this letter that can be placed elsewhere
-                if guess[i] not in in_word_wrong_position[i]:
-                    in_word_wrong_position[i].append(guess[i])
-                letter_count[guess[i]] -= 1  # Reduce the count as this placement is attempted
-        elif feedback[i] == '🟩':
+        if color_result[i] == '🟩':
+            if guess[i] in letter_count:
+                letter_count[guess[i]] -= 1
+                if letter_count[guess[i]] == 0:
+                    del letter_count[guess[i]]
             in_word_correct_position[i] = guess[i]
-            letter_count[guess[i]] -= 1  # Confirm this placement and reduce the count
-
-        # Additional check to ensure letters not yet confirmed are not wrongfully excluded
-        if char_count <= 0 and guess[i] not in in_word_correct_position and guess[i] not in not_in_word:
+        elif color_result[i] == '🟨':
+            if guess[i] in letter_count:
+                letter_count[guess[i]] -= 1
+                if letter_count[guess[i]] == 0:
+                    del letter_count[guess[i]]
+            in_word_wrong_position[i].append(guess[i])
+        elif color_result[i] == '⬛':
             not_in_word.append(guess[i])
 
+def score_word(word, not_in_word, in_word_wrong_position, in_word_correct_position):
+    score = 0
+    i = 0
+
+    # Score green positions
+    for letter in in_word_correct_position:
+        if letter:
+            if word[i] == letter:
+                score += 3  # High score for correct position
+            else:
+                score -= 1  # Penalty for not using a known correct letter in this position
+        i += 1
+
+    # Check for previously identified not-in-word letters
+    for letter in not_in_word:
+        if letter in word:
+            score -= 2  # Penalty for including a letter known not to be in the word
+
+    # Score yellow positions: correct letter but should be in different position
+    i = 0
+    for letters in in_word_wrong_position:
+        for letter in letters:
+            if letter in word:
+                if word[i] != letter:
+                    score += 1  # Moderate score for correct letter in different position
+                else:
+                    score -= 1  # Penalty for placing a yellow letter in the same position
+        i += 1
+
+    return score
+
+
 def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_position):
-    possible_words = []
+    max_score = float('-inf')
+    best_guess = None
+
     for word in words:
-        validity = True
-        # Check if the word is valid based on the constraints originally initialized
-        for i in range(len(word)):
-            if word[i] in not_in_word:
-                validity = False
-                break
-            if word[i] in in_word_wrong_position[i]:
-                validity = False
-                break
-            if in_word_correct_position[i] is not None and word[i] != in_word_correct_position[i]:
-                validity = False
-                break
-    
-        # If the word passes set constraints then add it to the list of possible words
-        if validity:
-            possible_words.append(word)
-        
-    return random.choice(possible_words)
+        score = score_word(word, not_in_word, in_word_wrong_position, in_word_correct_position)
+        if score > max_score:
+            max_score = score
+            best_guess = word
+
+    return best_guess if best_guess else random.choice(words)  # Fallback to a random choice if no best guess is found
 
 def battle_mode():
     player_answer = random.choice(words)
@@ -128,8 +163,8 @@ def battle_mode():
                 continue
 
             player_letter_result, player_color_result = check_guess(player_guess, player_answer)
-            print('Letters:', ' '.join(player_letter_result))
-            print('Feedback:', ' '.join(player_color_result))
+            print("Player's Guess:", ' '.join(player_letter_result))
+            print("Player's Feedback:", ' '.join(player_color_result))
 
             if player_guess == player_answer:
                 print("Congratulations! You have guessed the word correctly!")
@@ -140,12 +175,15 @@ def battle_mode():
             print("\nAI's Turn:")
             ai_guess_word = ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_position)
             if ai_guess_word:
+                ai_guess_word = ai_guess_word.upper()
                 ai_letter_result, ai_color_result = check_guess(ai_guess_word, ai_answer)
-                print("AI's guess:", ai_guess_word)
+                print("AI's guess:", ' '.join(ai_guess_word))
                 print("AI's Feedback:", ' '.join(ai_color_result))
                 update_ai_constraints(ai_guess_word, ai_color_result, not_in_word, in_word_wrong_position, in_word_correct_position, ai_answer)
-                if ai_guess == ai_answer:
-                    print("AI has guessed the word correctly!")
+                if ''.join(ai_letter_result) == ai_answer.upper():
+                    print("\nAI has guessed the word correctly!")
+                    print("AI wins! The correct word was:", ai_answer)
+                    print("Player's word was:", player_answer)
                     break
             ai_attempts -= 1
 
