@@ -40,6 +40,7 @@ def check_guess(guess, answer):
 
     return letter_result, color_result
 
+# Single player mode functionality
 def single_player():
     print("Guess the five letter word.")
     attempts = 6
@@ -60,6 +61,60 @@ def single_player():
     else:
         print("You've run out of attempts. The word was:", answer)
 
+# Two player mode functionality
+def initialize_players():
+    return {'Player 1': 0, 'Player 2': 0}
+
+def switch_turn(player):
+    players = ('Player 1', 'Player 2')
+    return players[(players.index(player) + 1) % len(players)]
+
+def display_score(scores):
+    print("\nScores:")
+    for player, score in scores.items():
+        print(f"{player}: {score}")
+
+def two_player():
+    players = initialize_players()
+    current_turn = 'Player 1'
+    words_to_guess = {'Player 1': random.choice(words), 'Player 2': random.choice(words)}
+    attempts_left = {'Player 1': 6, 'Player 2': 6}
+
+    while attempts_left['Player 1'] > 0 or attempts_left['Player 2'] > 0:
+        opponent = switch_turn(current_turn)
+        opponent_word = words_to_guess[opponent]
+
+        if attempts_left[current_turn] > 0:
+            print(f"\n{current_turn}'s turn to guess.")
+            guess = input(f"Attempt {7 - attempts_left[current_turn]}/6: Enter your guess: ").strip().lower()
+            while len(guess) != 5 or guess not in words:
+                guess = input("Invalid guess! Enter a valid 5-letter word: ").strip().lower()
+
+            color_result, letter_result = check_guess(guess, opponent_word)
+            print(letter_result, color_result)
+
+            if guess == opponent_word:
+                print(f"Correct! {current_turn} guessed the word!")
+                players[current_turn] += 1
+                break
+            else:
+                attempts_left[current_turn] -= 1
+
+        current_turn = switch_turn(current_turn)
+
+    for player in ['Player 1', 'Player 2']:
+        if attempts_left[player] == 0:
+            print(f"\nOut of attempts for {player}! The correct word was: {words_to_guess[player]}")
+
+    display_score(players)
+
+    if input("Play another round? (y/n): ").strip().lower() != 'y':
+        print("\nFinal Scores:")
+        display_score(players)
+    else:
+        two_player()
+
+# Implementing Battle mode functionality
 # AI implementation
 # Initializes the letter possibilities (whether its in the word or not, and whether position is correct) to the AI logic to determine the word
 def initialize_ai_constraints(word_length):
@@ -132,7 +187,6 @@ def score_word(word, not_in_word, in_word_wrong_position, in_word_correct_positi
 
     return score
 
-
 def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_position):
     max_score = float('-inf')
     best_guess = None
@@ -197,13 +251,16 @@ def battle_mode():
 def menu():
     print("Welcome to Wordle!")
     print("1. Single Player Mode")
-    print("2. Battle Mode")
-    print("3. Rules")
+    print("2. Two Player Mode")
+    print("3. Battle Mode")
+    print("4. Rules")
 
     choice = input("Choose a mode: ")
     if choice == "1" or choice.lower() == "single player mode":
         single_player()
-    elif choice == "2" or choice.lower() == "battle mode":
+    elif choice == "2" or choice.lower() == "two player mode":
+        two_player()
+    elif choice == "3" or choice.lower() == "battle mode":
         battle_mode()
     elif choice == "3" or choice.lower() == "rules":
         print("The goal of the game is to guess the word in 6 attempts.")
