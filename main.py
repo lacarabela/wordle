@@ -1,21 +1,23 @@
 import random
 
+# Load words from a file into a list
 def load_words(filename):
     with open(filename, 'r') as file:
         words = file.read().splitlines()
     return words
 
+# List of words to choose from
 words = load_words('wordle-words.txt')
 
 # Choose a random word from the list
 answer = random.choice(words)
 
-# Checks if the guess is correct
+# Checks if the guess is correct and returns result
 def check_guess(guess, answer):
-    guess = guess.lower()
+    guess = guess.lower() 
     answer = answer.lower()
     letter_result = list(guess.upper())  # return the uppercase version of the guess
-    color_result = ['⬛'] * len(guess)
+    color_result = ['⬛'] * len(guess) # initialize all letters to black
     answer_counts = {}
 
     # Count occurrences of each letter in the answer
@@ -25,13 +27,13 @@ def check_guess(guess, answer):
         else:
             answer_counts[letter] = 1
 
-    # First pass to mark greens
+    # First pass to mark greens (correct letter and position)
     for i in range(len(guess)):
         if guess[i] == answer[i]:
             color_result[i] = '🟩'
             answer_counts[guess[i]] -= 1
 
-    # Second pass to mark yellows
+    # Second pass to mark yellows (correct letter but wrong position)
     for i in range(len(guess)):
         if guess[i] != answer[i] and guess[i] in answer_counts and answer_counts[guess[i]] > 0:
             if color_result[i] == '⬛':
@@ -62,18 +64,22 @@ def single_player():
         print("You've run out of attempts. The word was:", answer)
 
 # Two player mode functionality
+# Initializes the players scores for two player mode
 def initialize_players():
     return {'Player 1': 0, 'Player 2': 0}
 
+# switch_turn function to switch between players
 def switch_turn(player):
     players = ('Player 1', 'Player 2')
     return players[(players.index(player) + 1) % len(players)]
 
+# Displays the scores of the players
 def display_score(scores):
     print("\nScores:")
     for player, score in scores.items():
         print(f"{player}: {score}")
 
+# Two Player mode: each player guesses an assigned random word
 def two_player():
     players = initialize_players()
     current_turn = 'Player 1'
@@ -128,6 +134,7 @@ def initialize_ai_constraints(word_length):
     in_word_correct_position = [None] * word_length
     return not_in_word, in_word_wrong_position, in_word_correct_position
 
+# updates the AI constraints based on the guess and color result
 def update_ai_constraints(guess, color_result, not_in_word, in_word_wrong_position, in_word_correct_position, answer):
     guess = guess.lower()
     answer = answer.lower()
@@ -156,6 +163,7 @@ def update_ai_constraints(guess, color_result, not_in_word, in_word_wrong_positi
         elif color_result[i] == '⬛':
             not_in_word.append(guess[i])
 
+# scores the word based on the constraints and returns the score of the word
 def score_word(word, not_in_word, in_word_wrong_position, in_word_correct_position):
     score = 0
     i = 0
@@ -187,6 +195,7 @@ def score_word(word, not_in_word, in_word_wrong_position, in_word_correct_positi
 
     return score
 
+# guesses the word based on the constraints and returns the best guess
 def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_position):
     max_score = float('-inf')
     best_guess = None
@@ -199,6 +208,7 @@ def ai_guess(words, not_in_word, in_word_wrong_position, in_word_correct_positio
 
     return best_guess if best_guess else random.choice(words)  # Fallback to a random choice if no best guess is found
 
+# Battle mode functionality
 def battle_mode():
     player_answer = random.choice(words)
     ai_answer = random.choice(words)
@@ -247,7 +257,8 @@ def battle_mode():
         print("Player has run out of attempts. The AI's word was:", ai_answer)
     elif ai_attempts == 0:
         print("AI has run out of attempts. The player's word was:", player_answer)
-        
+
+# Main menu to choose the mode     
 def menu():
     print("Welcome to Wordle!")
     print("1. Single Player Mode")
